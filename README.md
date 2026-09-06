@@ -97,6 +97,43 @@ CORE = "/usr/lib/aarch64-linux-gnu/libretro/mgba_libretro.so"
 sudo apt install retroarch libretro-nestopia libretro-mgba libretro-gambatte
 ```
 
+### 5. I2C-доступ — БЕЗ ЭТОГО управление не работает!
+
+На Debian 13 пользователь не имеет доступа к `/dev/i2c-0` (устройство `root:i2c 660`, группы `i2c` нет) → игровой мост `game_input.py` падает при старте:
+```
+PermissionError: [Errno 13] Permission denied: '/dev/i2c-0'
+```
+Симптом: игра запускается, картинка есть, но джойстик/GPIO-кнопки/CardKB не работают, окно не закрыть (m5hub уже остановлен лаунчером, а мост мёртв).
+
+Решение — в udev-правиле (`udev/99-gpio.rules`) дать доступ к i2c-dev группе `input`:
+```bash
+sudo cp retroarch/udev/99-gpio.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules
+sudo udevadm trigger --subsystem-match=i2c-dev --subsystem-match=gpio
+```
+Проверка: `ls -la /dev/i2c-0` → должно быть `root input`.
+
+### 6. Окно выбора игр — высота под экран 1024×600
+
+zenity-окно выбора ROM было `--height=320` (видны ~3 игры, остальное скроллом).
+Увеличено до `--height=530 --width=560` — видно ~8 игр без прокрутки.
+Затронутые файлы: `select_game.py`, `select_game_gbc.py`.
+
+### 7. OSD-уведомления RetroArch
+
+После установки русской локали (`ru_RU.UTF-8`) RetroArch пишет OSD-уведомления
+по-русски, а **встроенный шрифт не содержит кириллицы** → поверх игры появляется
+`?????`. Два решения (оба в конфигах `config/*.cfg`):
+
+1. Поставить системный шрифт с кириллицей:
+```ini
+video_font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+```
+2. Либо вообще отключить всплывающие уведомления:
+```ini
+video_font_enable = "false"
+```
+
 ---
 
 ## 🌡 cpu-temperature-panel → индикатор MATE
@@ -140,10 +177,10 @@ Zero 3W **такое же** (в CONFIG_UHID по-прежнему выключе
 │   ├── retrogame-gbc.sh            ← лаунчер GBC/GBA
 │   ├── scan_roms.py                ← генерация плейлиста
 │   ├── config/
-│   │   ├── retroarch.cfg           ← NES (video_driver=vulkan)
-│   │   └── gbc.cfg                 ← GBC (video_driver=vulkan)
+│   │   ├── retroarch.cfg           ← NES (video_driver=vulkan, OSD выкл)
+│   │   └── gbc.cfg                 ← GBC (video_driver=vulkan, OSD выкл)
 │   └── udev/
-│       └── 99-gpio.rules           ← доступ к GPIO для группы input
+│       └── 99-gpio.rules           ← GPIO + I2C доступ для группы input
 └── cpu-temp/
     ├── cpu-temp.sh                 ← оригинальный скрипт датчика
     ├── cpu-temp-indicator.py       ← AppIndicator для MATE
