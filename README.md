@@ -14,7 +14,7 @@
 | Репозиторий | Что сломалось на Debian 13 | Решение |
 |---|---|---|
 | `opi-zero3w-retroarch` | libgpiod v1 API → v2 (python3-libgpiod 2.2.0) | переписаны GPIO-блоки (`request_lines`/`LineSettings`) |
-| `opi-zero3w-retroarch` | видео-драйвер `xvideo` исчез из RetroArch 1.20 | замена на `gl` в конфигах |
+| `opi-zero3w-retroarch` | видео-драйвер `xvideo` исчез из RetroArch 1.20 | замена на `vulkan` — аппаратный PowerVR! |
 | `opi-zero3w-retroarch` | путь ядра mGBA в скрипте указывал в `~/.config/retroarch/cores/` | исправлен на системный `/usr/lib/aarch64-linux-gnu/libretro/` |
 | `orangepi-zero3w-cpu-temperature-panel` | репозиторий писан под XFCE-genmon, а DE теперь MATE (genmon в MATE нет) | индикатор в трее через AppIndicator |
 | `orangepi-zero3w-bluetooth-hid` | — (ядро то же 6.6.98-sun60iw2, `uhid.ko` подошёл) | без изменений, см. заметку |
@@ -56,7 +56,7 @@ pressed = (v == Value.INACTIVE)
 
 Затронутые файлы: `scripts/game_input.py`, `scripts/mario_buttons.py`.
 
-### 2. Видео-драйвер: xvideo → gl
+### 2. Видео-драйвер: xvideo → vulkan (аппаратный!)
 
 RetroArch в trixie (1.20) собран **без драйвера `xvideo`**. Доступны: `vulkan`, `gl`, `sdl2`, `null`.
 
@@ -64,13 +64,18 @@ RetroArch в trixie (1.20) собран **без драйвера `xvideo`**. Д
 [ERROR] Couldn't find any video driver named "xvideo"
 ```
 
-Решение — в конфигах:
-```ini
-video_driver = "gl"
-```
-На PowerVR работает через llvmpipe (софт-рендер, для NES/GBC достаточно).
+**Решение — `vulkan`** (а не `gl`!): на Zero 3W стоит аппаратный GPU-стек PowerVR
+с Vulkan 1.3.277, и RetroArch успешно создаёт vulkan-контекст `vk_x` на GPU
+`PowerVR B-Series BXM-4-64 MC1`. Игры (NES/GBC) рендерятся аппаратно, без
+llvmpipe-софта.
 
-Затронутые файлы: `config/retroarch.cfg`, `config/gbc.cfg`.
+Проверено: Super Mario Bros (Nestopia) и Shantae (mGBA) запускаются на vulkan,
+картинка корректная. `gl` тоже работает, но через llvmpipe (софт) — vulkan быстрее.
+
+В конфигах:
+```ini
+video_driver = "vulkan"
+```
 
 ### 3. Путь ядра mGBA
 
@@ -135,8 +140,8 @@ Zero 3W **такое же** (в CONFIG_UHID по-прежнему выключе
 │   ├── retrogame-gbc.sh            ← лаунчер GBC/GBA
 │   ├── scan_roms.py                ← генерация плейлиста
 │   ├── config/
-│   │   ├── retroarch.cfg           ← NES (video_driver=gl)
-│   │   └── gbc.cfg                 ← GBC (video_driver=gl)
+│   │   ├── retroarch.cfg           ← NES (video_driver=vulkan)
+│   │   └── gbc.cfg                 ← GBC (video_driver=vulkan)
 │   └── udev/
 │       └── 99-gpio.rules           ← доступ к GPIO для группы input
 └── cpu-temp/
