@@ -72,7 +72,52 @@ llvmpipe-софта.
 Проверено: Super Mario Bros (Nestopia) и Shantae (mGBA) запускаются на vulkan,
 картинка корректная. `gl` тоже работает, но через llvmpipe (софт) — vulkan быстрее.
 
-В конфигах:
+#### Команды для терминала (по шагам)
+
+**Шаг 1. Проверить, что аппаратный Vulkan вообще есть** (нужен GPU-стек, см.
+[opi-zero3w-gpu-debian13](https://github.com/Haidegger22/opi-zero3w-gpu-debian13)):
+
+```bash
+vulkaninfo --summary
+# deviceName  = PowerVR B-Series BXM-4-64 MC1  ← аппаратный (НЕ llvmpipe!)
+# apiVersion  = 1.3.277
+```
+
+**Шаг 2. Установить RetroArch + ядра из apt** (на Debian 13 backports не нужен):
+
+```bash
+sudo apt install retroarch libretro-nestopia libretro-mgba libretro-gambatte
+```
+
+**Шаг 3. Включить vulkan-драйвер в конфиге** — готовый конфиг из этого репозитория:
+
+```bash
+mkdir -p ~/.config/retroarch
+cp retroarch/config/retroarch.cfg ~/.config/retroarch/retroarch.cfg   # NES
+cp retroarch/config/gbc.cfg ~/.config/retroarch/gbc.cfg               # GBC/GBA
+```
+
+Или одной строкой вручную (если конфиг уже есть):
+
+```bash
+# заменить/добавить строку в ~/.config/retroarch/retroarch.cfg:
+sed -i 's/^video_driver.*/video_driver = "vulkan"/' ~/.config/retroarch/retroarch.cfg \
+  || echo 'video_driver = "vulkan"' >> ~/.config/retroarch/retroarch.cfg
+```
+
+**Шаг 4. Запустить игру и убедиться, что рендер аппаратный:**
+
+```bash
+# через лаунчер (NES):
+retroarch -L /usr/lib/aarch64-linux-gnu/libretro/nestopia_libretro.so ~/roms/nes/ИГРА.nes
+
+# в логе при старте ищи строку про vulkan (а НЕ про llvmpipe):
+retroarch --verbose 2>&1 | grep -iE "vulkan|llvmpipe|PowerVR"
+```
+
+Признак успеха: в `--verbose`-логе есть Vulkan/`PowerVR`, и нет падения в llvmpipe.
+
+В конфигах (готовые лежат в `retroarch/config/`):
 ```ini
 video_driver = "vulkan"
 ```
