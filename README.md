@@ -164,6 +164,34 @@ Zero 3W **такое же** (в CONFIG_UHID по-прежнему выключе
 
 ---
 
+## 🔌 FlClashX (прокси/VPN) — фиксы под Debian 13 (06.09.2026)
+
+Отдельный репозиторий с полной инструкцией: [opi-zero3w-flclashx-debian13](https://github.com/Haidegger22/opi-zero3w-flclashx-debian13).
+Здесь — краткая выжимка двух фиксов, найденных на практике:
+
+### 1. Чёрное окно GUI при запуске из меню/панели
+
+Env-обвязка (`LD_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu LIBGL_ALWAYS_SOFTWARE=1`)
+нужна НЕ только в autostart, но и в системном ярлыке `/usr/share/applications/FlClashX.desktop`
+(в deb-пакете там `Exec=FlClashX %U` без env → PVR-враппер libEGL → чёрное окно).
+
+```bash
+sudo sed -i 's|^Exec=.*|Exec=env LD_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu LIBGL_ALWAYS_SOFTWARE=1 /usr/bin/FlClashX %U|' /usr/share/applications/FlClashX.desktop
+```
+
+### 2. Chromium ходит мимо прокси (российский IP) — расширение SwitchyOmega
+
+Прокси-ядро работает (`curl -x 127.0.0.1:7890` даёт зарубежный IP), но браузер
+показывает российский IP и не открывает YouTube (`ERR_FAILED`). Причина — расширение
+**Proxy SwitchyOmega** в Chromium (id `omghfjlpggmjjaagoclmmobgdodcjboh`): оно имеет
+право `proxy` и перекрывает и системный прокси, и флаг `--proxy-server`.
+
+Решение: удалить расширение из `~/.config/chromium/Default/Extensions/` и вычистить
+запись из `Preferences`. После этого браузер ходит через прокси FlClashX
+(проверка: `api.ipify.org` в браузере = зарубежный IP).
+
+---
+
 ## Структура репозитория
 
 ```
