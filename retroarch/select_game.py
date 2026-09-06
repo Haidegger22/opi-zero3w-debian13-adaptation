@@ -18,7 +18,7 @@ labels = [os.path.basename(p)[:-4] for p in roms]
 args = ["zenity", "--list", "--title=Выбор игры",
         "--text=Выбери игру (джойстик/стрелки + Enter, Esc — отмена)",
         "--column=Игра", "--column=Путь", "--hide-column=2",
-        "--print-column=2", "--height=320", "--width=480"]
+        "--print-column=2", "--height=530", "--width=560"]
 for lbl, p in zip(labels, roms):
     args += [lbl, p]
 
