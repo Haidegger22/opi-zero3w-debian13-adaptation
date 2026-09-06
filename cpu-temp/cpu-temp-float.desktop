@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=CPU Temp Widget
+Comment=🌡 плавающий полупрозрачный виджет температуры CPU (поверх окон, перетаскиваемый)
+Exec=/home/orangepi/.local/bin/cpu-temp-float.py
+X-GNOME-Autostart-enabled=true
+Terminal=false

@@ -181,23 +181,38 @@ video_font_enable = "false"
 
 ---
 
-## 🌡 cpu-temperature-panel → индикатор MATE
+## 🌡 cpu-temperature-panel → плавающий виджет (float) на рабочем столе
 
-Репозиторий описывал genmon-плагин для **XFCE**-панели. Активная DE на Debian 13 — **MATE**, где genmon отсутствует.
+Репозиторий описывал genmon-плагин для **XFCE**-панели. Активная DE на Debian 13 — **MATE**.
 
-Решение: тот же скрипт чтения датчика + **AppIndicator в трее**:
+Важный нюанс: python-gi **AyatanaAppIndicator3 не регистрируется** на Zero 3W/Debian 13
+(индикатор молчит в SNI-watcher, иконка в трее не появляется), поэтому AppIndicator-путь
+отбрасываем. Рабочее решение — **плавающий полупрозрачный виджет-градусник** прямо на
+рабочем столе: рисуется через Cairo (GTK3), висит поверх всех окон, перетаскивается
+мышью (левая/правая кнопка), закрывается средним кликом, обновляется каждые 5 сек.
 
 ```bash
-sudo apt install gir1.2-ayatanaappindicator3-0.1
-cp cpu-temp/cpu-temp-indicator.py ~/.local/bin/
-chmod +x ~/.local/bin/cpu-temp-indicator.py
-cp cpu-temp/cpu-temp-indicator.desktop ~/.config/autostart/
+# зависимость — только GTK3 (есть в MATE по умолчанию)
+cp cpu-temp/cpu-temp-float.py ~/.local/bin/
+chmod +x ~/.local/bin/cpu-temp-float.py
+cp cpu-temp/cpu-temp-float.desktop ~/.config/autostart/
 ```
 
-Скрипт `cpu-temp-indicator.py` показывает `🌡 NN°C` в трее, обновление каждые 5 сек,
-чтение из `/sys/class/thermal/thermal_zone0/temp`.
+Запуск вручную:
 
-`cpu-temp.sh` (как в оригинале) тоже приложен — работает в любом окружении.
+```bash
+DISPLAY=:0 ~/.local/bin/cpu-temp-float.py
+```
+
+Виджет `cpu-temp-float.py` показывает градусник + `NN°` (например `35°`) в правом
+нижнем углу (стартовая позиция), чтение из `/sys/class/thermal/thermal_zone0/temp`.
+Цвет индикатора: зелёный <50°, жёлтый <70°, красный >=70°.
+
+Управление:
+- **левая/правая кнопка мыши** — перетаскивание
+- **средний клик** — закрыть виджет
+- **позиция запоминается** на время сессии (автозапуск ставит в правый нижний угол;
+  смещение настраивается в коде: `self.move(mw - W - 16, mh - H - 20)`)
 
 ---
 
@@ -255,9 +270,8 @@ sudo sed -i 's|^Exec=.*|Exec=env LD_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu LIBG
 │   └── udev/
 │       └── 99-gpio.rules           ← GPIO + I2C доступ для группы input
 └── cpu-temp/
-    ├── cpu-temp.sh                 ← оригинальный скрипт датчика
-    ├── cpu-temp-indicator.py       ← AppIndicator для MATE
-    └── cpu-temp-indicator.desktop  ← autostart
+    ├── cpu-temp-float.py            ← плавающий виджет-градусник (Cairo/GTK3)
+    └── cpu-temp-float.desktop       ← autostart
 ```
 
 ---
