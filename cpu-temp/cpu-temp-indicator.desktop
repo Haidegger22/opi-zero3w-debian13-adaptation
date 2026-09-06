@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=CPU Temp Indicator
+Comment=🌡 температура CPU в трее (MATE AppIndicator)
+Exec=/home/orangepi/.local/bin/cpu-temp-indicator.py
+X-GNOME-Autostart-enabled=true
+Terminal=false
