@@ -301,9 +301,9 @@ sudo udevadm control --reload-rules && sudo udevadm trigger --subsystem-match=gp
 
 # ROMs — положить в ~/roms/nes/*.nes и ~/roms/gbc/*.gbc
 
-# индикатор температуры (MATE)
-cp cpu-temp/cpu-temp-indicator.py ~/.local/bin/ && chmod +x ~/.local/bin/cpu-temp-indicator.py
-cp cpu-temp/cpu-temp-indicator.desktop ~/.config/autostart/
+# плавающий виджет температуры (MATE, float)
+cp cpu-temp/cpu-temp-float.py ~/.local/bin/ && chmod +x ~/.local/bin/cpu-temp-float.py
+cp cpu-temp/cpu-temp-float.desktop ~/.config/autostart/
 ```
 
 Запуск игры: `bash ~/.openclaw/workspace/retrogame.sh` (или иконка на Desktop).
